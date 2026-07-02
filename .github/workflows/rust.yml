@@ -10,13 +10,26 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  check:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - uses: actions/checkout@v4
+
+      - name: Install WebAssembly targets
+        run: rustup target add wasm32-wasip1 wasm32-wasip2
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Check native build
+        run: cargo check --verbose
+
+      - name: Build Zed extension (WASI preview 1)
+        run: cargo build --target wasm32-wasip1 --verbose
+
+      - name: Build Zed extension (WASI preview 2)
+        run: cargo build --target wasm32-wasip2 --verbose
+
+      - name: Run tests
+        run: cargo test --verbose

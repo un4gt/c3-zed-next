@@ -1,0 +1,146 @@
+{
+  "Module": {
+    "prefix": "module",
+    "body": [
+      "module ${1:main};",
+      "$0"
+    ],
+    "description": "Declare a C3 module"
+  },
+  "Import": {
+    "prefix": "import",
+    "body": [
+      "import ${1:std::io};",
+      "$0"
+    ],
+    "description": "Import a C3 module"
+  },
+  "Function": {
+    "prefix": "fn",
+    "body": [
+      "fn ${1:void} ${2:name}(${3})",
+      "{",
+      "    $0",
+      "}"
+    ],
+    "description": "Define a C3 function"
+  },
+  "Main Function": {
+    "prefix": "main",
+    "body": [
+      "fn void main()",
+      "{",
+      "    $0",
+      "}"
+    ],
+    "description": "Define main"
+  },
+  "Struct": {
+    "prefix": "struct",
+    "body": [
+      "struct ${1:Name}",
+      "{",
+      "    ${2:int} ${3:field};",
+      "    $0",
+      "}"
+    ],
+    "description": "Define a C3 struct"
+  },
+  "Interface": {
+    "prefix": "interface",
+    "body": [
+      "interface ${1:Name}",
+      "{",
+      "    fn ${2:void} ${3:method}(${4});",
+      "    $0",
+      "}"
+    ],
+    "description": "Define a C3 interface"
+  },
+  "Enum": {
+    "prefix": "enum",
+    "body": [
+      "enum ${1:Name}",
+      "{",
+      "    ${2:VALUE},",
+      "    $0",
+      "}"
+    ],
+    "description": "Define a C3 enum"
+  },
+  "Macro": {
+    "prefix": "macro",
+    "body": [
+      "macro ${1:void} ${2:name}(${3})",
+      "{",
+      "    $0",
+      "}"
+    ],
+    "description": "Define a C3 macro"
+  },
+  "If": {
+    "prefix": "if",
+    "body": [
+      "if (${1:condition})",
+      "{",
+      "    $0",
+      "}"
+    ],
+    "description": "Insert an if block"
+  },
+  "Switch": {
+    "prefix": "switch",
+    "body": [
+      "switch (${1:value})",
+      "{",
+      "case ${2:match}:",
+      "    $0",
+      "default:",
+      "    break;",
+      "}"
+    ],
+    "description": "Insert a switch statement"
+  },
+  "For": {
+    "prefix": "for",
+    "body": [
+      "for (${1:int i = 0}; ${2:i < count}; ${3:i++})",
+      "{",
+      "    $0",
+      "}"
+    ],
+    "description": "Insert a for loop"
+  },
+  "Foreach": {
+    "prefix": "foreach",
+    "body": [
+      "foreach (${1:item} : ${2:items})",
+      "{",
+      "    $0",
+      "}"
+    ],
+    "description": "Insert a foreach loop"
+  },
+  "Defer": {
+    "prefix": "defer",
+    "body": [
+      "defer",
+      "{",
+      "    $0",
+      "}"
+    ],
+    "description": "Insert a defer block"
+  },
+  "Doc Comment": {
+    "prefix": "doc",
+    "body": [
+      "<*",
+      "${1:Description.}",
+      "@param ${2:name}",
+      "@return ${3:description}",
+      "*>",
+      "$0"
+    ],
+    "description": "Insert a C3 doc comment"
+  }
+}
