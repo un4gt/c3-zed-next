@@ -7,8 +7,8 @@ use zed_extension_api::{
     DownloadedFileType, LanguageServerInstallationStatus, Os, Result,
 };
 
-const C3LSP_REPOSITORY: &str = "pherrymason/c3-lsp";
-const C3LSP_VERSION: &str = "v0.4.0";
+const C3LSP_REPOSITORY: &str = "tonis2/lsp";
+const C3LSP_VERSION: &str = "v0.1.8";
 const C3LSP_DEFAULT_DIAGNOSTICS_DELAY_MS: u64 = 250;
 const C3LSP_DIAGNOSTICS_DELAY_ENV_VAR: &str = "C3_ZED_DIAGNOSTICS_DELAY_MS";
 
@@ -29,25 +29,37 @@ impl C3Extension {
 
         match (os, architecture) {
             (Os::Windows, Architecture::X8664) => Ok(C3LspAsset {
-                archive_name: "c3lsp-windows-amd64.zip",
-                binary_path: "server/bin/release/c3lsp.exe",
+                archive_name: "c3-lsp-windows-x86_64.zip",
+                binary_path: "lsp.exe",
                 file_type: DownloadedFileType::Zip,
                 make_executable: false,
             }),
             (Os::Linux, Architecture::X8664) => Ok(C3LspAsset {
-                archive_name: "c3lsp-linux-amd64.tar.gz",
-                binary_path: "server/bin/release/c3lsp",
-                file_type: DownloadedFileType::GzipTar,
+                archive_name: "c3-lsp-linux-x86_64.zip",
+                binary_path: "lsp",
+                file_type: DownloadedFileType::Zip,
+                make_executable: true,
+            }),
+            (Os::Linux, Architecture::Aarch64) => Ok(C3LspAsset {
+                archive_name: "c3-lsp-linux-aarch64.zip",
+                binary_path: "lsp",
+                file_type: DownloadedFileType::Zip,
                 make_executable: true,
             }),
             (Os::Mac, Architecture::Aarch64) => Ok(C3LspAsset {
-                archive_name: "c3lsp-darwin-arm64.zip",
-                binary_path: "server/bin/release/c3lsp",
+                archive_name: "c3-lsp-macos-aarch64.zip",
+                binary_path: "lsp",
+                file_type: DownloadedFileType::Zip,
+                make_executable: true,
+            }),
+            (Os::Mac, Architecture::X8664) => Ok(C3LspAsset {
+                archive_name: "c3-lsp-macos-x86_64.zip",
+                binary_path: "lsp",
                 file_type: DownloadedFileType::Zip,
                 make_executable: true,
             }),
             _ => Err(format!(
-                "c3lsp {C3LSP_VERSION} does not provide a prebuilt binary for {os:?}/{architecture:?}; install c3lsp and add it to PATH"
+                "tonis2/lsp {C3LSP_VERSION} does not provide a prebuilt binary for {os:?}/{architecture:?}; install its lsp binary and add it to PATH"
             )),
         }
     }
@@ -57,7 +69,7 @@ impl C3Extension {
         language_server_id: &zed::LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<String> {
-        if let Some(path) = worktree.which("c3lsp") {
+        if let Some(path) = Self::language_server_path_from_path(worktree) {
             return Ok(path);
         }
 
@@ -67,14 +79,27 @@ impl C3Extension {
             }
         }
 
-        self.install_c3lsp(language_server_id)
+        self.install_c3_lsp(language_server_id)
     }
 
-    fn install_c3lsp(&mut self, language_server_id: &zed::LanguageServerId) -> Result<String> {
+    fn language_server_path_from_path(worktree: &zed::Worktree) -> Option<String> {
+        let (os, _) = current_platform();
+        let candidates: &[&str] = if matches!(os, Os::Windows) {
+            &["lsp.exe", "lsp"]
+        } else {
+            &["lsp"]
+        };
+
+        candidates
+            .iter()
+            .find_map(|command| worktree.which(command))
+    }
+
+    fn install_c3_lsp(&mut self, language_server_id: &zed::LanguageServerId) -> Result<String> {
         let asset = Self::asset_for_current_platform().map_err(|error| {
             Self::installation_failed(
                 language_server_id,
-                format!("failed to select c3lsp asset: {error}"),
+                format!("failed to select tonis2/lsp asset: {error}"),
             )
         })?;
 
@@ -83,7 +108,7 @@ impl C3Extension {
             .strip_suffix(".tar.gz")
             .or_else(|| asset.archive_name.strip_suffix(".zip"))
             .unwrap_or(asset.archive_name);
-        let install_dir = format!("c3lsp/{C3LSP_VERSION}/{archive_stem}");
+        let install_dir = format!("tonis2-lsp/{C3LSP_VERSION}/{archive_stem}");
         let binary_path = format!("{install_dir}/{}", asset.binary_path);
 
         if Path::new(&binary_path).is_file() {
@@ -100,7 +125,7 @@ impl C3Extension {
             github_release_by_tag_name(C3LSP_REPOSITORY, C3LSP_VERSION).map_err(|error| {
                 Self::installation_failed(
                     language_server_id,
-                    format!("failed to fetch c3lsp {C3LSP_VERSION} release metadata: {error}"),
+                    format!("failed to fetch tonis2/lsp {C3LSP_VERSION} release metadata: {error}"),
                 )
             })?;
 
@@ -112,7 +137,7 @@ impl C3Extension {
                 Self::installation_failed(
                     language_server_id,
                     format!(
-                        "c3lsp {C3LSP_VERSION} release does not contain asset {}",
+                        "tonis2/lsp {C3LSP_VERSION} release does not contain asset {}",
                         asset.archive_name
                     ),
                 )
@@ -121,7 +146,7 @@ impl C3Extension {
         fs::create_dir_all(&install_dir).map_err(|error| {
             Self::installation_failed(
                 language_server_id,
-                format!("failed to create c3lsp install directory {install_dir}: {error}"),
+                format!("failed to create tonis2/lsp install directory {install_dir}: {error}"),
             )
         })?;
 
@@ -135,7 +160,7 @@ impl C3Extension {
                 Self::installation_failed(
                     language_server_id,
                     format!(
-                        "failed to download c3lsp asset {} from {}: {error}",
+                        "failed to download tonis2/lsp asset {} from {}: {error}",
                         asset.archive_name, release_asset.download_url
                     ),
                 )
@@ -146,7 +171,7 @@ impl C3Extension {
             make_file_executable(&binary_path).map_err(|error| {
                 Self::installation_failed(
                     language_server_id,
-                    format!("failed to make c3lsp executable at {binary_path}: {error}"),
+                    format!("failed to make tonis2/lsp executable at {binary_path}: {error}"),
                 )
             })?;
         }
@@ -155,7 +180,7 @@ impl C3Extension {
             return Err(Self::installation_failed(
                 language_server_id,
                 format!(
-                    "downloaded c3lsp asset {}, but expected binary was not found at {binary_path}",
+                    "downloaded tonis2/lsp asset {}, but expected binary was not found at {binary_path}",
                     asset.archive_name
                 ),
             ));
@@ -221,14 +246,13 @@ impl zed::Extension for C3Extension {
         worktree: &zed::Worktree,
     ) -> Result<zed::Command> {
         let env = worktree.shell_env();
-        let mut args = vec![
-            "-diagnostics-delay".to_string(),
-            Self::diagnostics_delay_ms(&env),
-        ];
+        let mut args = vec![format!(
+            "--diagnostics-delay={}",
+            Self::diagnostics_delay_ms(&env)
+        )];
 
         if let Some(path) = worktree.which("c3c") {
-            args.push("-c3c-path".to_string());
-            args.push(path);
+            args.push(format!("--compiler-path={path}"));
         }
 
         Ok(zed::Command {
